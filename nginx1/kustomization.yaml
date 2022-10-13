@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- local-props.yaml
+- service.yaml
+- serviceaccount.yaml
+- deployment.yaml
+
+replacements:
+- source:
+    kind: ConfigMap
+    name: local-props
+    fieldPath: metadata.annotations.location-id
+  targets:
+  - select:
+      kind: Deployment
+    fieldPaths:
+    - spec.template.spec.initContainers.[name=create-index].env.[name=location_id].value

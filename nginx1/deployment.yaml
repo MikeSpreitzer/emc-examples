@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: default
+  name: nginx
+  labels:
+    app: nginx
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      serviceAccountName: nginx
+      initContainers:
+      - name: create-index
+        image: busybox
+        env:
+        - name: location_id
+          value: unset
+        command: 
+        - sh
+        - -c
+        - |
+            cat >/indexhome/index.html <<EOF
+            <!DOCTYPE html>
+            <html>
+            <head><title>Welcome to NGINX</title></head>
+            <body><h1>Welcome to NGINX at $(location_id)!</h1></body>
+            </html>
+            EOF
+        volumeMounts:
+        - name: indexhome
+          mountPath: /indexhome
+      containers:
+      - name: nginx
+        image: nginx:1.23
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: indexhome
+          mountPath: /usr/share/nginx/html/index.html
+          subPath: index.html
+          readOnly: true
+      volumes:
+      - name: indexhome
+        emptyDir: {}
